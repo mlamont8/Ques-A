@@ -11,6 +11,10 @@ const app = express();
 // the database
 const questions = [];
 
+// JWT
+const jwt = require('express-jwt');
+const jwksRsa = require('jwks-rsa');
+
 // enhance your app security with Helmet
 app.use(helmet());
 
@@ -42,21 +46,37 @@ app.get('/:id', (req, res) => {
     res.send(question[0]);
 });
 
+const checkJwt = jwt({
+    secret: jwksRsa.expressJwtSecret({
+        cache: true,
+        rateLimit: true,
+        jwksRequestsPerMinute: 5,
+        jwksUri: `https://mlamont8.auth0.com/.well-known/jwks.json`
+    }),
+
+    // Validate the audience and the issuer.
+    audience: 'GSUkPceGLOAZRx7Fa7CNUVfoeF7dD372',
+    issuer: `https://mlamont8.auth0.com/`,
+    algorithms: ['RS256']
+});
+
+
 // insert a new question
-app.post('/', (req, res) => {
+app.post('/', checkJwt, (req, res) => {
     const { title, description } = req.body;
     const newQuestion = {
         id: questions.length + 1,
         title,
         description,
         answers: [],
+        author: req.user.name,
     };
     questions.push(newQuestion);
     res.status(200).send();
 });
 
 // insert a new answer to a question
-app.post('/answer/:id', (req, res) => {
+app.post('/answer/:id', checkJwt, (req, res) => {
     const { answer } = req.body;
 
     const question = questions.filter(q => (q.id === parseInt(req.params.id)));
@@ -65,6 +85,7 @@ app.post('/answer/:id', (req, res) => {
 
     question[0].answers.push({
         answer,
+        author: req.user.name,
     });
 
     res.status(200).send();
