@@ -1,13 +1,16 @@
 import React, { Component } from 'react';
-import Navbar from './Navbar/Navbar'
+import { Route } from 'react-router-dom';
+import NavBar from './Navbar/Navbar'
 import Questions from './Questions/Questions'
+import Question from './Question/Question'
 
 class App extends Component {
   render() {
     return (
       <div>
-        <Navbar />
-        <Questions />
+        <NavBar />
+        <Route exact path='/' component={Questions} />
+        <Route exact path='/question/:questionId' component={Question} />
       </div>
     );
   }
